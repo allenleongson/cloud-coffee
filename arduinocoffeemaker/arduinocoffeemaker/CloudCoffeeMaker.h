@@ -49,6 +49,7 @@ private:
 	boolean _sendToServer(const char * buf);
 	boolean _updateServer();
 	boolean _subscribeEndpoint(int endpoint);
+	void _readEthernetIfAvailable();
 
 	boolean _setTime();
 	time_t _retrieveNtp();

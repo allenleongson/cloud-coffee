@@ -85,6 +85,9 @@ void CloudCoffeeMaker::maintain() {
 		Serial.println("Server updated");
 		_lastUpdateTime = m;
 	}
+
+	//read ethernet if there are available bytes
+	_readEthernetIfAvailable();
 }
 
 //server communication
@@ -220,6 +223,42 @@ boolean CloudCoffeeMaker::_subscribeEndpoint(int endpoint) {
 	}
 
 	return res_success;
+}
+
+void CloudCoffeeMaker::_readEthernetIfAvailable() {
+	if (_ethernetClient.available() > 0) {
+		unsigned long startTime = millis();
+		char res_buf[500];
+		unsigned int cnt = 0;
+		boolean res_success = false;
+		boolean wait_for_n = false;
+
+		//wait for server response
+		//shouldnt take more than 10 secs
+		while (startTime + 10000 > millis()) {
+			if (_ethernetClient.available()) {
+				res_buf[cnt] = _ethernetClient.read();
+
+				if (wait_for_n && res_buf[cnt] == 10) { // \n
+														//add '\0'
+					res_buf[++cnt] = '\0';
+					res_success = true;
+					break;
+				}
+
+				if (res_buf[cnt] == 13) { // \r
+					wait_for_n = true;
+				}
+				cnt++;
+			}
+		}
+
+		if (res_success) {
+			Serial.println(res_buf);
+			//_processIncomingUpdate(res_buf);
+			//_prevHeartBeat = millis();
+		}
+	}
 }
 
 boolean CloudCoffeeMaker::_setTime() {
