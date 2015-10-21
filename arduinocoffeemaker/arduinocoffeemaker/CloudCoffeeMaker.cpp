@@ -10,6 +10,10 @@ CloudCoffeeMaker::CloudCoffeeMaker(const uint8_t * macAddress) : _ntpIp(157, 7, 
 	for (int i = 0; i < 6; i++) {
 		_macAddress[i] = macAddress[i];
 	}
+
+	for (int i = 0; i < 3; i++) {
+		strcpy(_trayOwner[i], "^");
+	}
 }
 
 void CloudCoffeeMaker::begin() {

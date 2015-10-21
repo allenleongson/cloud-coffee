@@ -21,6 +21,8 @@ public:
 	void begin();
 	void maintain();
 protected:
+	char _trayOwner[3][50];
+
 private:
 	static EthernetUDP _ntpClient;
 	IPAddress _ntpIp;
