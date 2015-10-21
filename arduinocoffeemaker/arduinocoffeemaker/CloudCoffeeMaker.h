@@ -13,7 +13,7 @@
 #include <ArduinoJson.h>
 
 #define NTP_PACKET_SIZE 48
-#define CONSTANT_UPDATE_TIME_MS 5000
+#define CONSTANT_UPDATE_TIME_MS 10000
 
 #define EP1_FEED_ID "631913265"
 #define EP2_FEED_ID "1663563459"
@@ -35,11 +35,11 @@ public:
 protected:
 	char _trayOwner[3][50];
 	char _endpointFeedId[4][20];
-	char _endpointApiKey[4][48];
+	char _endpointApiKey[4][49];
 
 private:
-	static EthernetUDP _ntpClient;
-	IPAddress _ntpIp;
+	//static EthernetUDP _ntpClient;
+	//IPAddress _ntpIp;
 	uint8_t * _macAddress;
 
 	UIPClientExt _ethernetClient;
@@ -51,10 +51,6 @@ private:
 	boolean _subscribeEndpoint(int endpoint);
 	void _readEthernetIfAvailable();
 
-	boolean _setTime();
-	time_t _retrieveNtp();
-	void _sendNTPPacket();
-	static byte _packetBuffer[NTP_PACKET_SIZE];
 	char * _feedId;
 	char * _apiKey;
 
