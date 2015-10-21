@@ -10,9 +10,20 @@
 #include "CoffeeMakerHardware.h"
 #include <Time.h>
 #include <UIPEthernet.h>
+#include <ArduinoJson.h>
 
 #define NTP_PACKET_SIZE 48
 #define CONSTANT_UPDATE_TIME_MS 5000
+
+#define EP1_FEED_ID "631913265"
+#define EP2_FEED_ID "1663563459"
+#define EP3_FEED_ID "1829222295"
+#define EP4_FEED_ID "14274993"
+
+#define EP1_API_KEY "3LYXcaFzpmZCb18Rr7u9Am0ZFLLDtoW90OXdYKQRaDHpXEJu"
+#define EP2_API_KEY "SuB8htKzqYKpeFq9cPd0dsgIqv2d45cGotNEgpzgd4mFlIvW"
+#define EP3_API_KEY "yONkjCBQUKRpiAiGrTMLp5LdEp7bILVRjGCyI7XB0OZf0pEv"
+#define EP4_API_KEY "D3aTFj7c2JqtL3ya09hJGAIVGvjKt0yteBOFuwRB55E6LwwS"
 
 class CloudCoffeeMaker : public CoffeeMakerHardware {
 public:
@@ -23,6 +34,8 @@ public:
 	void maintain();
 protected:
 	char _trayOwner[3][50];
+	char _endpointFeedId[4][20];
+	char _endpointApiKey[4][48];
 
 private:
 	static EthernetUDP _ntpClient;
@@ -35,6 +48,7 @@ private:
 	//server communication
 	boolean _sendToServer(const char * buf);
 	boolean _updateServer();
+	boolean _subscribeEndpoint(int endpoint);
 
 	boolean _setTime();
 	time_t _retrieveNtp();

@@ -22,6 +22,17 @@ CloudCoffeeMaker::CloudCoffeeMaker(const uint8_t * macAddress, const char * feed
 
 	_apiKey = new char[strlen(apiKey) + 1];
 	strcpy(_apiKey, apiKey);
+
+	//endpoints
+	strcpy(_endpointFeedId[0], EP1_FEED_ID);
+	strcpy(_endpointFeedId[1], EP2_FEED_ID);
+	strcpy(_endpointFeedId[2], EP3_FEED_ID);
+	strcpy(_endpointFeedId[3], EP4_FEED_ID);
+
+	strcpy(_endpointApiKey[0], EP1_API_KEY);
+	strcpy(_endpointApiKey[1], EP2_API_KEY);
+	strcpy(_endpointApiKey[2], EP3_API_KEY);
+	strcpy(_endpointApiKey[3], EP4_API_KEY);
 }
 
 void CloudCoffeeMaker::begin() {
@@ -48,6 +59,18 @@ void CloudCoffeeMaker::begin() {
 	}
 
 	Serial.println("Cloud connection successful");
+
+	//subscribe to endpoints.
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 3; j++) {
+			if (_subscribeEndpoint(i)) {
+				Serial.print("Subscribed to (");
+				Serial.print(i);
+				Serial.println(")");
+				break;
+			}
+		}
+	}
 }
 
 void CloudCoffeeMaker::maintain() {
@@ -59,7 +82,7 @@ void CloudCoffeeMaker::maintain() {
 	unsigned long m = millis();
 	if (_lastUpdateTime + CONSTANT_UPDATE_TIME_MS < m) {
 		_updateServer();
-		Serial.print("Server updated");
+		Serial.println("Server updated");
 		_lastUpdateTime = m;
 	}
 }
@@ -147,6 +170,56 @@ boolean CloudCoffeeMaker::_updateServer() {
 
 	return res;
 	//printToServer(buf);
+}
+
+boolean CloudCoffeeMaker::_subscribeEndpoint(int endpoint) {
+	// initialize jsonBuffer
+	StaticJsonBuffer<200> jsonBuffer;
+
+	// create subscription request to feed
+	JsonObject& root = jsonBuffer.createObject();
+	root["method"] = "subscribe";
+	char resource[50];
+	strcpy(resource, "/feeds/");
+	strcat(resource, _endpointFeedId[endpoint]);
+	strcat(resource, "/datastreams/req_id");
+	strcat(resource, "req_id");
+	root["resource"] = resource;
+
+	JsonObject& headers = root.createNestedObject("headers");
+	headers["X-ApiKey"] = _apiKey;
+
+	Serial.println();
+	//root.prettyPrintTo(Serial);
+
+	root.printTo(_ethernetClient);
+
+	unsigned long startTime = millis();
+	char res_buf[500];
+	unsigned int cnt = 0;
+	boolean res_success = false;
+	boolean wait_for_n = false;
+
+	//wait for server response
+	while (startTime + 10000 > millis()) {
+		if (_ethernetClient.available()) {
+			res_buf[cnt] = _ethernetClient.read();
+
+			if (wait_for_n && res_buf[cnt] == 10) { // \n
+													//add '\0'
+				res_buf[++cnt] = '\0';
+				res_success = true;
+				break;
+			}
+
+			if (res_buf[cnt] == 13) { // \r
+				wait_for_n = true;
+			}
+			cnt++;
+		}
+	}
+
+	return res_success;
 }
 
 boolean CloudCoffeeMaker::_setTime() {
