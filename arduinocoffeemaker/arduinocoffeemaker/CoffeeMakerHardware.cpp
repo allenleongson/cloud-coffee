@@ -57,6 +57,30 @@ void CoffeeMakerHardware::setCoffeeMakerErrorCode(CoffeeMakerHardware::CoffeeMak
 	_errorCode = errorCode;
 }
 
+int CoffeeMakerHardware::getTraySlotStatus(int slot) {
+	switch (_traySlotStatus[slot]) {
+	case Available:
+		return 0;
+	case Reserved:
+		return 1;
+	case Preparing:
+		return 2;
+	case Finished:
+		return 3;
+	}
+}
+
+int CoffeeMakerHardware::getErrorCode() {
+	switch (_errorCode) {
+	case None:
+		return 0;
+	case TrayUnaligned:
+		return 1;
+	case IngredientShortSupply:
+		return 2;
+	}
+}
+
 CoffeeMakerHardware::~CoffeeMakerHardware() {
 
 }

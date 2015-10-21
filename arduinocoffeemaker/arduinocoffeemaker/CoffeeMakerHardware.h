@@ -31,6 +31,9 @@ public:
 	int getSugarTspRemaining();
 	int getWaterCupRemaining();
 
+	int getTraySlotStatus(int slot);
+	int getErrorCode();
+
 	//setters
 	void setIngredientsRemaining(int coffeeTsp, int creamTsp, int sugarTsp, int waterCup);
 	void setTrayStatus(CoffeeMakerHardware::CoffeeMakerTraySlotStatus status, int slot);

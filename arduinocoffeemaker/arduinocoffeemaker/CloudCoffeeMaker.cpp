@@ -4,7 +4,8 @@ EthernetUDP CloudCoffeeMaker::_ntpClient;
 byte CloudCoffeeMaker::_packetBuffer[NTP_PACKET_SIZE];
 
 //IP of jp.pool.ntp.org
-CloudCoffeeMaker::CloudCoffeeMaker(const uint8_t * macAddress) : _ntpIp(157, 7, 154, 23), _cloudIP(64, 94, 18, 120) {
+CloudCoffeeMaker::CloudCoffeeMaker(const uint8_t * macAddress, const char * feedId, const char * apiKey) 
+	: _ntpIp(157, 7, 154, 23), _cloudIP(64, 94, 18, 120), _lastUpdateTime(0) {
 	_macAddress = new uint8_t[6];
 
 	for (int i = 0; i < 6; i++) {
@@ -14,6 +15,13 @@ CloudCoffeeMaker::CloudCoffeeMaker(const uint8_t * macAddress) : _ntpIp(157, 7, 
 	for (int i = 0; i < 3; i++) {
 		strcpy(_trayOwner[i], "^");
 	}
+
+	//feedid and apikey
+	_feedId = new char[strlen(feedId) + 1];
+	strcpy(_feedId, feedId);
+
+	_apiKey = new char[strlen(apiKey) + 1];
+	strcpy(_apiKey, apiKey);
 }
 
 void CloudCoffeeMaker::begin() {
@@ -46,6 +54,99 @@ void CloudCoffeeMaker::maintain() {
 	CoffeeMakerHardware::maintain();
 
 	Ethernet.maintain();
+
+	//UPDATE XIVELY EVERY 5S
+	unsigned long m = millis();
+	if (_lastUpdateTime + CONSTANT_UPDATE_TIME_MS < m) {
+		_updateServer();
+		Serial.print("Server updated");
+		_lastUpdateTime = m;
+	}
+}
+
+//server communication
+boolean CloudCoffeeMaker::_sendToServer(const char * buf) {
+	_ethernetClient.print(buf);
+
+	unsigned long startTime = millis();
+	char res_buf[500];
+	unsigned int cnt = 0;
+	boolean res_success = false;
+	boolean wait_for_n = false;
+
+	//wait for server response
+	while (startTime + 10000 > millis()) {
+		if (_ethernetClient.available()) {
+			res_buf[cnt] = _ethernetClient.read();
+
+			if (wait_for_n && res_buf[cnt] == 10) {
+
+				res_buf[++cnt] = '\0';
+				res_success = true;
+				break;
+			}
+
+			if (res_buf[cnt] == 13) {
+				wait_for_n = true;
+			}
+			cnt++;
+		}
+	}
+
+	return res_success;
+}
+
+boolean CloudCoffeeMaker::_updateServer() {
+	char buf[800];
+	char sBuf[15];
+	char nBuf[2];
+	nBuf[1] = '\0';
+
+	strcpy(buf, "{\"method\":\"put\",\"resource\":\"/feeds/");
+	strcat(buf, _feedId);
+	strcat(buf, "\",\"headers\":{\"X-ApiKey\":\"");
+	strcat(buf, _apiKey);
+	strcat(buf, "\"},\"body\":{\"version\":\"1.0.0\",\"datastreams\":[");
+	strcat(buf, "{\"id\":\"coffee_tsp\",\"current_value\":");
+	snprintf(sBuf, 15, "%d", getCoffeeTspRemaining());
+	strcat(buf, sBuf);
+	strcat(buf, "},{\"id\":\"creamer_tsp\",\"current_value\":");
+	snprintf(sBuf, 15, "%d", getCreamTspRemaining());
+	strcat(buf, sBuf);
+	strcat(buf, "},{\"id\":\"sugar_tsp\",\"current_value\":");
+	snprintf(sBuf, 15, "%d", getSugarTspRemaining());
+	strcat(buf, sBuf);
+	strcat(buf, "},{\"id\":\"water_cups\",\"current_value\":");
+	snprintf(sBuf, 15, "%d", getWaterCupRemaining());
+	strcat(buf, sBuf);
+	strcat(buf, "},{\"id\":\"error_code\",\"current_value\":");
+	snprintf(sBuf, 15, "%d", getErrorCode());
+	strcat(buf, sBuf);
+	for (int i = 0; i < 3; i++) {
+		nBuf[0] = '0' + i;
+		strcat(buf, "},{\"id\":\"tray_");
+		strcat(buf, nBuf);
+		strcat(buf, "_owner\",\"current_value\":\"");
+		strcat(buf, _trayOwner[i]);
+		strcat(buf, "\"},{\"id\":\"tray_");
+		strcat(buf, nBuf);
+		strcat(buf, "_status\",\"current_value\":");
+		snprintf(sBuf, 15, "%d", getTraySlotStatus(i));
+		strcat(buf, sBuf);
+	}
+	strcat(buf, "}]}}");
+
+	boolean res = false;
+	//try 3 times
+	for (int i = 0; i < 3; i++) {
+		res = _sendToServer(buf);
+		if (res)
+			break;
+		else delay(1000);
+	}
+
+	return res;
+	//printToServer(buf);
 }
 
 boolean CloudCoffeeMaker::_setTime() {
@@ -109,4 +210,6 @@ void CloudCoffeeMaker::_sendNTPPacket() {
 
 CloudCoffeeMaker::~CloudCoffeeMaker() {
 	delete[] _macAddress;
+	delete[] _feedId;
+	delete[] _apiKey;
 }
