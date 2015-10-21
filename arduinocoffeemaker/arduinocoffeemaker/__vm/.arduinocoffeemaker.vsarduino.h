@@ -87,4 +87,5 @@ extern "C" void __cxa_pure_virtual() {;}
 #include <CloudCoffeeMaker.h>
 #include <CoffeeMakerHardware.cpp>
 #include <CoffeeMakerHardware.h>
+#include <Operators.h>
 #endif

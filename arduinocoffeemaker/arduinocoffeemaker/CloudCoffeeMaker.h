@@ -8,16 +8,31 @@
 #endif
 
 #include "CoffeeMakerHardware.h"
+#include <Time.h>
+#include <UIPEthernet.h>
+
+#define NTP_PACKET_SIZE 48
 
 class CloudCoffeeMaker : public CoffeeMakerHardware {
 public:
-	CloudCoffeeMaker();
+	CloudCoffeeMaker(const uint8_t * macAddress);
 	~CloudCoffeeMaker();
 
 	void begin();
 	void maintain();
 protected:
 private:
+	static EthernetUDP _ntpClient;
+	IPAddress _ntpIp;
+	uint8_t * _macAddress;
+
+	UIPClientExt _ethernetClient;
+
+	boolean _setTime();
+	time_t _retrieveNtp();
+	void _sendNTPPacket();
+	static byte _packetBuffer[NTP_PACKET_SIZE];
+
 	CloudCoffeeMaker(const CloudCoffeeMaker& c);
 	CloudCoffeeMaker& operator=(const CloudCoffeeMaker& d) = delete;
 };

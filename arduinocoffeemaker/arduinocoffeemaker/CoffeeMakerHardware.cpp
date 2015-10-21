@@ -10,8 +10,7 @@ void CoffeeMakerHardware::begin() {
 }
 
 void CoffeeMakerHardware::maintain() {
-	Serial.println("TEST");
-	delay(1000);
+
 }
 
 CoffeeMakerHardware::~CoffeeMakerHardware() {
