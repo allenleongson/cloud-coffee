@@ -4,7 +4,7 @@ EthernetUDP CloudCoffeeMaker::_ntpClient;
 byte CloudCoffeeMaker::_packetBuffer[NTP_PACKET_SIZE];
 
 //IP of jp.pool.ntp.org
-CloudCoffeeMaker::CloudCoffeeMaker(const uint8_t * macAddress) : _ntpIp(157, 7, 154, 23) { 
+CloudCoffeeMaker::CloudCoffeeMaker(const uint8_t * macAddress) : _ntpIp(157, 7, 154, 23), _cloudIP(64, 94, 18, 120) {
 	_macAddress = new uint8_t[6];
 
 	for (int i = 0; i < 6; i++) {
@@ -28,6 +28,14 @@ void CloudCoffeeMaker::begin() {
 		Serial.println("Time not set.");
 		delay(1000);
 	}
+
+	//connect to cloud/Xively
+	while (!_ethernetClient.connect(_cloudIP, 8081)) {
+		Serial.println("Connection failed");
+		delay(1000);
+	}
+
+	Serial.println("Cloud connection successful");
 }
 
 void CloudCoffeeMaker::maintain() {

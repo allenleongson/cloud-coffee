@@ -14,6 +14,7 @@ public:
 
 	virtual void begin();
 	virtual void maintain();
+
 protected:
 private:
 	CoffeeMakerHardware(const CoffeeMakerHardware& c);

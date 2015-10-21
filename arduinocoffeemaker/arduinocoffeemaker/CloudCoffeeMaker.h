@@ -27,6 +27,7 @@ private:
 	uint8_t * _macAddress;
 
 	UIPClientExt _ethernetClient;
+	IPAddress _cloudIP;
 
 	boolean _setTime();
 	time_t _retrieveNtp();
