@@ -11,6 +11,7 @@
 #include <Time.h>
 #include <UIPEthernet.h>
 #include <ArduinoJson.h>
+#include "CoffeeOrder.h"
 
 #define NTP_PACKET_SIZE 48
 #define CONSTANT_UPDATE_TIME_MS 10000
@@ -47,6 +48,7 @@ private:
 	boolean _sendToServer(const char * buf);
 	boolean _updateServer();
 	boolean _subscribeEndpoint(int endpoint);
+	boolean _retrieveIngredients(const char * feedId, const char * apiKey, CoffeeOrder& order);
 	void _readEthernetIfAvailable();
 	void _processAvailableData(char * buf);
 

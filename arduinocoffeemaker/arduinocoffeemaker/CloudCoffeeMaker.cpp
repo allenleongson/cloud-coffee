@@ -320,6 +320,19 @@ void CloudCoffeeMaker::_processAvailableData(char * buf) {
 			//no error, proceed with coffee making
 			if (traySlot >= 0) { //>=
 				//retrieve ingredients.
+				//assert same request id.
+				//eliminate assertion in next implementation.
+				CoffeeOrder coffeeOrder(_endpointFeedId[endpt], _endpointApiKey[endpt], traySlot);
+				while (!_retrieveIngredients(_endpointFeedId[endpt], _endpointApiKey[endpt], coffeeOrder)) {
+					Serial.println("Failed to retrive ingredients.");
+					delay(1000);
+				}
+				
+				Serial.print("Ingredients: ");
+				Serial.print(coffeeOrder.coffeeTsp);
+				Serial.print(coffeeOrder.creamTsp);
+				Serial.println(coffeeOrder.sugarTsp);
+
 			}
 			else {
 				//send full tray error
@@ -331,6 +344,104 @@ void CloudCoffeeMaker::_processAvailableData(char * buf) {
 			_sendErrorCode(_endpointFeedId[endpt], _endpointApiKey[endpt], req_id, getErrorCode());
 		}
 	}
+}
+
+boolean CloudCoffeeMaker::_retrieveIngredients(const char * feedId, const char * apiKey, CoffeeOrder& order) {
+	StaticJsonBuffer<400> jsonBuffer;
+	char ds[] = "\"datastreams\":";
+
+	char resource[50] = "/feeds/";
+	strcat(resource, feedId);
+	JsonObject& request = jsonBuffer.createObject();
+	request["method"] = "get";
+	request["resource"] = resource;
+	JsonObject& params = request.createNestedObject("params");
+	params["datastreams"] = "req_coffee,req_creamer,req_sugar,username";
+
+	JsonObject& reqHead = request.createNestedObject("headers");
+	reqHead["X-ApiKey"] = apiKey;
+
+	unsigned long startTime = millis();
+	char res_buf[500];
+	unsigned int cnt = 15;
+	boolean datastream_start = false;
+	boolean datastream_end = false;
+	boolean res_success = false;
+	boolean wait_for_n = false;
+
+	_ethernetClient.flush();
+	request.printTo(_ethernetClient);
+
+	unsigned int tc = 0;
+
+	strcpy(res_buf, "{\"datastreams\":");
+	//wait for server response
+	//shouldnt take more than 10 secs
+	while (startTime + 10000 > millis()) {
+		if (_ethernetClient.available()) {
+			char t = _ethernetClient.read();
+			//Serial.write(t);
+			//retrieve only datastream portion
+			if (!datastream_start) {
+				if (ds[tc] == t) {
+					tc++;
+					if (tc == 14) {
+						datastream_start = true;
+					}
+				}
+				else tc = 0;
+			}
+			else if (!datastream_end) {
+				res_buf[cnt] = t;
+				if (t == ']') {
+					datastream_end = true;
+					res_buf[++cnt] = '}';
+					res_buf[++cnt] = '\0';
+				}
+				cnt++;
+			}
+
+			if (wait_for_n && t == 10) { // \n
+				res_success = true;
+				res_buf[++cnt] = '\0';
+				break;
+			}
+
+			if (t == 13) { // \r
+				wait_for_n = true;
+			}
+
+		}
+	}
+
+	if (!res_success) return false;
+	
+	jsonBuffer = StaticJsonBuffer<400>();
+
+	JsonObject& response = jsonBuffer.parseObject(res_buf);
+
+	//set status
+	JsonArray& datastreams = response["datastreams"];
+
+	//req_coffee,req_creamer,req_sugar,username
+
+	for (int i = 0; i < datastreams.size(); i++) {
+		if (!strcmp(datastreams[i]["id"], "req_coffee")) {
+			order.coffeeTsp = strtoul(datastreams[i]["current_value"].asString(), NULL, 10);
+		}
+		else if (!strcmp(datastreams[i]["id"], "req_sugar")) {
+			order.sugarTsp = strtoul(datastreams[i]["current_value"].asString(), NULL, 10);
+		}
+		else if (!strcmp(datastreams[i]["id"], "req_creamer")) {
+			order.creamTsp = strtoul(datastreams[i]["current_value"].asString(), NULL, 10);
+		}
+		else if (!strcmp(datastreams[i]["id"], "username")) {
+			//_requestTime = strtoul(datastreams[i]["current_value"].asString(), NULL, 10);
+			strcpy(order.username, datastreams[i]["current_value"].asString());
+		}
+	}
+
+	return true;
 }
 
 CloudCoffeeMaker::~CloudCoffeeMaker() {
