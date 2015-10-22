@@ -69,6 +69,21 @@ void CloudCoffeeMaker::maintain() {
 
 	Ethernet.maintain();
 
+	for (int i = 0; i < 3; i++) {
+		if (getTraySlotStatus(i) == 0) {
+			strcpy(_trayOwner[i], "^");
+		}
+	}
+
+	//if finished
+	if (getCoffeeMakerStatus() == 2) { //finished.
+		//dequeue.
+		CoffeeOrder c = coffeeOrderList.shift();
+		//inform user.
+		_informEndpointFinished(c.feedId, c.apiKey, c.reqId);
+		setCoffeeMakerToAvailableSlot();
+	}
+
 	//UPDATE XIVELY EVERY 5S
 	unsigned long m = millis();
 	if (_lastUpdateTime + CONSTANT_UPDATE_TIME_MS < m) {
@@ -182,6 +197,36 @@ boolean CloudCoffeeMaker::_sendErrorCode(const char * feedId, const char * apiKe
 	strcat(buf, sBuf);
 	strcat(buf, "},{\"id\":\"resp_code\",\"current_value\":");
 	snprintf(sBuf, 15, "%d", error);
+	strcat(buf, sBuf);
+	strcat(buf, "}]}}");
+
+	boolean res = false;
+	Serial.println(buf);
+	//try 3 times
+	for (int i = 0; i < 3; i++) {
+		res = _sendToServer(buf);
+		if (res)
+			break;
+		else delay(1000);
+	}
+
+	return res;
+	//printToServer(buf);
+}
+
+boolean CloudCoffeeMaker::_informEndpointFinished(const char * feedId, const char * apiKey, unsigned long req_id) {
+	char buf[300];
+	char sBuf[30];
+	char nBuf[2];
+	nBuf[1] = '\0';
+
+	strcpy(buf, "{\"method\":\"put\",\"resource\":\"/feeds/");
+	strcat(buf, feedId);
+	strcat(buf, "\",\"headers\":{\"X-ApiKey\":\"");
+	strcat(buf, apiKey);
+	strcat(buf, "\"},\"body\":{\"version\":\"1.0.0\",\"datastreams\":[");
+	strcat(buf, "{\"id\":\"resp_finished\",\"current_value\":");
+	snprintf(sBuf, 30, "%lu", req_id);
 	strcat(buf, sBuf);
 	strcat(buf, "}]}}");
 
@@ -324,15 +369,15 @@ void CloudCoffeeMaker::_processAvailableData(char * buf) {
 				//eliminate assertion in next implementation.
 				CoffeeOrder coffeeOrder(_endpointFeedId[endpt], _endpointApiKey[endpt], traySlot);
 				while (!_retrieveIngredients(_endpointFeedId[endpt], _endpointApiKey[endpt], coffeeOrder)) {
-					Serial.println("Failed to retrive ingredients.");
+					Serial.println("Failed to retrieve ingredients.");
 					delay(1000);
 				}
 				
-				Serial.print("Ingredients: ");
-				Serial.print(coffeeOrder.coffeeTsp);
-				Serial.print(coffeeOrder.creamTsp);
-				Serial.println(coffeeOrder.sugarTsp);
+				coffeeOrder.reqId = req_id;
+				strcpy(_trayOwner[traySlot], coffeeOrder.username);
+				coffeeOrderList.add(coffeeOrder);
 
+				_sendErrorCode(_endpointFeedId[endpt], _endpointApiKey[endpt], req_id, 0); //no error, processing.
 			}
 			else {
 				//send full tray error

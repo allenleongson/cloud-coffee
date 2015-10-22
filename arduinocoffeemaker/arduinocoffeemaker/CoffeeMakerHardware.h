@@ -7,6 +7,9 @@
 	#include "WProgram.h"
 #endif
 
+#include "CoffeeOrder.h"
+#include <LinkedList.h>
+
 class CoffeeMakerHardware {
 public:
 	CoffeeMakerHardware();
@@ -46,6 +49,9 @@ public:
 	void setCoffeeMakerErrorCode(CoffeeMakerHardware::CoffeeMakerErrorCode errorCode);
 	void setTrayStatus(CoffeeMakerHardware::TrayStatus trayStatus, int slot);
 	void setCoffeeMakerStatus(CoffeeMakerHardware::CoffeeMakerStatus status);
+	void setCoffeeMakerToAvailableSlot();
+
+	LinkedList<CoffeeOrder> coffeeOrderList;
 
 	virtual void begin();
 	virtual void maintain();
@@ -59,6 +65,8 @@ private:
 	CoffeeMakerStatus _coffeeMakerStatus;
 	CoffeeMakerErrorCode _errorCode;
 	TrayStatus _trayStatus[3];
+
+	void _prepareCoffee(const CoffeeOrder & order);
 
 	CoffeeMakerHardware(const CoffeeMakerHardware& c);
 	CoffeeMakerHardware& operator=(const CoffeeMakerHardware& d) = delete;

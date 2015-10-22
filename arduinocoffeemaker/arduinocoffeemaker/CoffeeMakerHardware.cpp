@@ -10,6 +10,9 @@ void CoffeeMakerHardware::begin() {
 	Serial.begin(9600);
 	Serial.println("Serial Begin.");
 	//setup input and output pins here.
+
+	//get initial ingredient status
+	setIngredientsRemaining(20, 20, 20, 20);
 }
 
 void CoffeeMakerHardware::maintain() {
@@ -24,9 +27,11 @@ void CoffeeMakerHardware::maintain() {
 
 	setIngredientsRemaining(coffeeTsp, creamTsp, sugarTsp, waterCup);
 
-	//set coffee maker status here.
-	if (true && true || true) {
-		setCoffeeMakerStatus(Available);
+	//check here if coffee maker is finished preparing.
+	if (_coffeeMakerStatus == Preparing) {
+		if (!false) {
+			setCoffeeMakerStatus(Finished);
+		}
 	}
 
 	//set tray status here. read sensors to check tray sensors.
@@ -43,7 +48,37 @@ void CoffeeMakerHardware::maintain() {
 	if (!false) {
 		setCoffeeMakerErrorCode(None);
 	}
+
+	//check if work needs to be done.
+	if (_coffeeMakerStatus == Available) {
+		if (coffeeOrderList.size() > 0) {
+			CoffeeOrder c = coffeeOrderList.get(0);
+			_prepareCoffee(c);
+		}
+		//else no work will be done.
+	}
 }
+
+void CoffeeMakerHardware::_prepareCoffee(const CoffeeOrder & order) {
+	Serial.print("PREPARING: ");
+	Serial.print(order.username);
+	Serial.print(order.coffeeTsp);
+	Serial.print(order.sugarTsp);
+	Serial.print(order.creamTsp);
+
+	_coffeeMakerStatus = Preparing;
+}
+
+void CoffeeMakerHardware::setCoffeeMakerToAvailableSlot() {
+	//this function is called whenever coffeemaker is finished preparing coffee and ready to prepare next.
+
+	_coffeeMakerStatus = Available;
+}
+
+
+//INTERNALS. DO NOT MODIFY BEYOND THIS POINT.
+
+
 
 //getters
 int CoffeeMakerHardware::getCoffeeTspRemaining() { return _coffeeTsp; }

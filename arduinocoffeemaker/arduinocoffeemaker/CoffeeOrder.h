@@ -12,10 +12,12 @@
 class CoffeeOrder {
 public:
 	CoffeeOrder(const char * cApiKey, const char * cFeedId, int cTray);
+	CoffeeOrder();
 
 	char apiKey[50];
 	char feedId[20];
 	char username[30];
+	unsigned long reqId;
 	int tray;
 	int coffeeTsp;
 	int sugarTsp;

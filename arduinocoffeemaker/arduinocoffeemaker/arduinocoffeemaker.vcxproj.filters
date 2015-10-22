@@ -30,12 +30,18 @@
     <ClInclude Include="Operators.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CoffeeOrder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CloudCoffeeMaker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CoffeeMakerHardware.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CoffeeOrder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

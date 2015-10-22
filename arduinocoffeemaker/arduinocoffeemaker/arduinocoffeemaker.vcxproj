@@ -76,14 +76,21 @@
   <ItemGroup>
     <ClInclude Include="CloudCoffeeMaker.h" />
     <ClInclude Include="CoffeeMakerHardware.h" />
+    <ClInclude Include="CoffeeOrder.h" />
     <ClInclude Include="Operators.h" />
     <ClInclude Include="__vm\.arduinocoffeemaker.vsarduino.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CloudCoffeeMaker.cpp" />
     <ClCompile Include="CoffeeMakerHardware.cpp" />
+    <ClCompile Include="CoffeeOrder.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties arduino.upload.port="COM3" />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>
