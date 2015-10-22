@@ -15,7 +15,7 @@ import com.aleongson.cloudcoffee.http.RequestApiKeyAsyncTask;
 
 import org.json.JSONObject;
 
-public class LoginActivity extends AppCompatActivity
+public class LoginActivity extends BaseActivity
         implements RequestApiKeyAsyncTask.IRequestApiKeyListener{
 
     ProgressDialog progress;
@@ -48,6 +48,13 @@ public class LoginActivity extends AppCompatActivity
                         txtPassword.getText().toString());
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Intent intentStopService = new Intent(this, XivelyTcpService.class);
+        stopService(intentStopService);
     }
 
     @Override

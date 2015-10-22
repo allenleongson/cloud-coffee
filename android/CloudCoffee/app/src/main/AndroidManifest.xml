@@ -17,6 +17,7 @@
         </activity>
         <activity android:name=".MainActivity"
             android:label="Main Activity" />
+        <service android:name=".XivelyTcpService"></service>
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
