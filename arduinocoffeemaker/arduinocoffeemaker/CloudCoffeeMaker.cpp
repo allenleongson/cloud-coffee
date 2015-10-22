@@ -80,7 +80,7 @@ void CloudCoffeeMaker::maintain() {
 		//dequeue.
 		CoffeeOrder c = coffeeOrderList.shift();
 		//inform user.
-		_informEndpointFinished(c.feedId, c.apiKey, c.reqId);
+		_informEndpointFinished(c.feedId, c.apiKey, c.reqId, c.tray);
 		setCoffeeMakerToAvailableSlot();
 	}
 
@@ -214,7 +214,7 @@ boolean CloudCoffeeMaker::_sendErrorCode(const char * feedId, const char * apiKe
 	//printToServer(buf);
 }
 
-boolean CloudCoffeeMaker::_informEndpointFinished(const char * feedId, const char * apiKey, unsigned long req_id) {
+boolean CloudCoffeeMaker::_informEndpointFinished(const char * feedId, const char * apiKey, unsigned long req_id, int tray) {
 	char buf[300];
 	char sBuf[30];
 	char nBuf[2];
@@ -227,6 +227,9 @@ boolean CloudCoffeeMaker::_informEndpointFinished(const char * feedId, const cha
 	strcat(buf, "\"},\"body\":{\"version\":\"1.0.0\",\"datastreams\":[");
 	strcat(buf, "{\"id\":\"resp_finished\",\"current_value\":");
 	snprintf(sBuf, 30, "%lu", req_id);
+	strcat(buf, sBuf);
+	strcat(buf, "},{\"id\":\"resp_code\",\"current_value\":");
+	snprintf(sBuf, 30, "%d", tray);
 	strcat(buf, sBuf);
 	strcat(buf, "}]}}");
 

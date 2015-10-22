@@ -54,7 +54,7 @@ private:
 
 	//update endpoints
 	boolean _sendErrorCode(const char * feedId, const char * apiKey, unsigned long req_id, int error);
-	boolean _informEndpointFinished(const char * feedId, const char * apiKey, unsigned long req_id);
+	boolean _informEndpointFinished(const char * feedId, const char * apiKey, unsigned long req_id, int tray);
 
 	char * _feedId;
 	char * _apiKey;

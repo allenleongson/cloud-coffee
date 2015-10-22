@@ -1,8 +1,5 @@
 package com.aleongson.cloudcoffee;
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -10,8 +7,6 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.app.NotificationCompat;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -20,10 +15,6 @@ import android.widget.TextView;
  * 22/10/2015.
  */
 public class MainActivity extends BaseActivity {
-    private XivelyTcpService serviceReference;
-    private boolean isBound;
-    private final static int REQUEST_CODE = 100;
-    private final static int NOTIFICATION_ID = 103;
     SharedPreferences mPrefs;
 
     @Override
@@ -44,8 +35,8 @@ public class MainActivity extends BaseActivity {
         setContentView(R.layout.activity_main);
 
         //start service
-        Intent intent = new Intent(this, XivelyTcpService.class);
-        startService(intent);
+        //Intent intent = new Intent(this, XivelyTcpService.class);
+        //startService(intent);
 
         TextView username = (TextView) findViewById(R.id.usernameLabel);
         username.setText(user);
@@ -68,66 +59,19 @@ public class MainActivity extends BaseActivity {
                 MainActivity.this.finish();
             }
         });
+
+        btnCreateCoffee.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, CreateCoffeeActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 
-
-    private ServiceConnection connection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            serviceReference = ((XivelyTcpService.LocalBinder) service).getService();
-            isBound = true;
-            serviceReference.cancelNotification();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            serviceReference = null;
-            isBound = false;
-        }
-    };
-
-    private void doUnbindService() {
-        unbindService(connection);
-        isBound = false;
-    }
-
-    private void doBindToService() {
-        if(!isBound) {
-            Intent bindIntent = new Intent(this, XivelyTcpService.class);
-            isBound = bindService(bindIntent, connection, Context.BIND_AUTO_CREATE);
-        }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        doBindToService();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-
-        doUnbindService();
-    }
-
-    @Override
-    public void onBackPressed() {
-        moveTaskToBack(true);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        /*
-        if(isFinishing()) {
-            Intent intentStopService = new Intent(this, XivelyTcpService.class);
-            stopService(intentStopService);
-        }*/
-    }
 
     @Override
     protected void onBackground() {
-        serviceReference.sendNotification();
+        //serviceReference.sendNotification();
     }
 }

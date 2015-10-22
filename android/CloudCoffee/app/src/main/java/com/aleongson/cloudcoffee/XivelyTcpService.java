@@ -12,15 +12,35 @@ import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.aleongson.cloudcoffee.async.SendCoffeeRequestTask;
+
 /**
  * 22/10/2015.
  */
-public class XivelyTcpService extends Service {
+public class XivelyTcpService extends Service implements
+        SendCoffeeRequestTask.ISendCoffeeRequestListener{
     private final IBinder binder = new LocalBinder();
     private Thread backgroundThread;
     private final static int REQUEST_CODE = 100;
     private final static int NOTIFICATION_ID = 103;
     private boolean hasNotification = false;
+
+    private boolean hasRequestPending = false;
+    private boolean hasResponsePending = false;
+
+    private int requestResponseCode = -1;
+
+    @Override
+    public void sendCoffeeRequestPreExecute() {
+
+    }
+
+    @Override
+    public void sendCoffeeRequestPostExecute(Integer result) {
+        Log.v("SENDCOF", Integer.toString(result));
+        hasResponsePending = true;
+        requestResponseCode = result;
+    }
 
     @Override
     public void onCreate() {
@@ -85,5 +105,24 @@ public class XivelyTcpService extends Service {
             notificationManager.cancel(NOTIFICATION_ID);
             hasNotification = false;
         }
+    }
+
+    public boolean sendCoffeeRequest(String feedId, String apiKey, int coffee, int sugar, int creamer) {
+        if(!hasRequestPending && !hasResponsePending) {
+            new SendCoffeeRequestTask(this, feedId, apiKey).execute(coffee, sugar, creamer);
+            hasRequestPending = true;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean hasResponse() {
+        return hasResponsePending;
+    }
+
+    public int getResponseCode() {
+        hasRequestPending = false;
+        hasResponsePending = false;
+        return requestResponseCode;
     }
 }
