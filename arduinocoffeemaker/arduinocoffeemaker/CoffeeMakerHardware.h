@@ -12,9 +12,13 @@ public:
 	CoffeeMakerHardware();
 	~CoffeeMakerHardware();
 
-	enum CoffeeMakerTraySlotStatus {
+	enum TrayStatus {
+		Vacant,
+		Occupied
+	};
+
+	enum CoffeeMakerStatus {
 		Available,
-		Reserved,
 		Preparing,
 		Finished
 	};
@@ -22,7 +26,8 @@ public:
 	enum CoffeeMakerErrorCode {
 		None,
 		TrayUnaligned,
-		IngredientShortSupply
+		IngredientShortSupply,
+		TrayFull
 	};
 
 	//getters
@@ -31,13 +36,16 @@ public:
 	int getSugarTspRemaining();
 	int getWaterCupRemaining();
 
+	int getAvailableTraySlot();
 	int getTraySlotStatus(int slot);
 	int getErrorCode();
+	int getCoffeeMakerStatus();
 
 	//setters
 	void setIngredientsRemaining(int coffeeTsp, int creamTsp, int sugarTsp, int waterCup);
-	void setTrayStatus(CoffeeMakerHardware::CoffeeMakerTraySlotStatus status, int slot);
 	void setCoffeeMakerErrorCode(CoffeeMakerHardware::CoffeeMakerErrorCode errorCode);
+	void setTrayStatus(CoffeeMakerHardware::TrayStatus trayStatus, int slot);
+	void setCoffeeMakerStatus(CoffeeMakerHardware::CoffeeMakerStatus status);
 
 	virtual void begin();
 	virtual void maintain();
@@ -48,8 +56,9 @@ private:
 	int _sugarTsp;
 	int _waterCup;
 
-	CoffeeMakerTraySlotStatus _traySlotStatus[3];
+	CoffeeMakerStatus _coffeeMakerStatus;
 	CoffeeMakerErrorCode _errorCode;
+	TrayStatus _trayStatus[3];
 
 	CoffeeMakerHardware(const CoffeeMakerHardware& c);
 	CoffeeMakerHardware& operator=(const CoffeeMakerHardware& d) = delete;

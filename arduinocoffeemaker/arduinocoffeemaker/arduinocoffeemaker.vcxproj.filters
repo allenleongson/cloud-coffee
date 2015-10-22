@@ -27,6 +27,9 @@
     <ClInclude Include="CoffeeMakerHardware.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Operators.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CloudCoffeeMaker.cpp">

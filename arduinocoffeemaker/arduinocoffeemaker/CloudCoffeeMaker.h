@@ -38,8 +38,6 @@ protected:
 	char _endpointApiKey[4][49];
 
 private:
-	//static EthernetUDP _ntpClient;
-	//IPAddress _ntpIp;
 	uint8_t * _macAddress;
 
 	UIPClientExt _ethernetClient;
@@ -50,6 +48,10 @@ private:
 	boolean _updateServer();
 	boolean _subscribeEndpoint(int endpoint);
 	void _readEthernetIfAvailable();
+	void _processAvailableData(char * buf);
+
+	//update endpoints
+	boolean _sendErrorCode(const char * feedId, const char * apiKey, unsigned long req_id, int error);
 
 	char * _feedId;
 	char * _apiKey;

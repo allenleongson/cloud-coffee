@@ -1,8 +1,8 @@
 #include "CoffeeMakerHardware.h"
 
-CoffeeMakerHardware::CoffeeMakerHardware() : _errorCode(None) {
+CoffeeMakerHardware::CoffeeMakerHardware() : _errorCode(None), _coffeeMakerStatus(Available) {
 	for (int i = 0; i < 3; i++) {
-		_traySlotStatus[i] = Available;
+		setTrayStatus(Vacant, i);
 	}
 }
 
@@ -24,9 +24,19 @@ void CoffeeMakerHardware::maintain() {
 
 	setIngredientsRemaining(coffeeTsp, creamTsp, sugarTsp, waterCup);
 
+	//set coffee maker status here.
+	if (true && true || true) {
+		setCoffeeMakerStatus(Available);
+	}
+
 	//set tray status here. read sensors to check tray sensors.
 	for (int i = 0; i < 3; i++) {
-		setTrayStatus(Available, i);
+		if (true) {
+			setTrayStatus(Vacant, i);
+		}
+		else {
+			setTrayStatus(Occupied, i);
+		}
 	}
 
 	//set error code here. implement your logic here.
@@ -49,24 +59,36 @@ void CoffeeMakerHardware::setIngredientsRemaining(int coffeeTsp, int creamTsp, i
 	_waterCup = waterCup;
 }
 
-void CoffeeMakerHardware::setTrayStatus(CoffeeMakerHardware::CoffeeMakerTraySlotStatus trayStatus, int slot) {
-	_traySlotStatus[slot] = trayStatus;
+void CoffeeMakerHardware::setTrayStatus(CoffeeMakerHardware::TrayStatus trayStatus, int slot) {
+	_trayStatus[slot] = trayStatus;
 }
 
 void CoffeeMakerHardware::setCoffeeMakerErrorCode(CoffeeMakerHardware::CoffeeMakerErrorCode errorCode) {
 	_errorCode = errorCode;
 }
 
+void CoffeeMakerHardware::setCoffeeMakerStatus(CoffeeMakerHardware::CoffeeMakerStatus status) {
+	_coffeeMakerStatus = status;
+}
+
+int CoffeeMakerHardware::getAvailableTraySlot() {
+	int i = 0;
+	for (i = 0; i < 3; i++) {
+		if (_trayStatus[i] == Vacant) {
+			break;
+		}
+	}
+
+	if (i == 3) i = -1;
+	return i;
+}
+
 int CoffeeMakerHardware::getTraySlotStatus(int slot) {
-	switch (_traySlotStatus[slot]) {
-	case Available:
+	switch (_trayStatus[slot]) {
+	case Vacant:
 		return 0;
-	case Reserved:
+	case Occupied:
 		return 1;
-	case Preparing:
-		return 2;
-	case Finished:
-		return 3;
 	}
 }
 
@@ -77,6 +99,17 @@ int CoffeeMakerHardware::getErrorCode() {
 	case TrayUnaligned:
 		return 1;
 	case IngredientShortSupply:
+		return 2;
+	}
+}
+
+int CoffeeMakerHardware::getCoffeeMakerStatus() {
+	switch (_coffeeMakerStatus) {
+	case Available:
+		return 0;
+	case Preparing:
+		return 1;
+	case Finished:
 		return 2;
 	}
 }

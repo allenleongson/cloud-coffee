@@ -1,9 +1,5 @@
 #include "CloudCoffeeMaker.h"
 
-//EthernetUDP CloudCoffeeMaker::_ntpClient;
-//byte CloudCoffeeMaker::_packetBuffer[NTP_PACKET_SIZE];
-
-//IP of jp.pool.ntp.org
 CloudCoffeeMaker::CloudCoffeeMaker(const uint8_t * macAddress, const char * feedId, const char * apiKey) 
 	: _cloudIP(64, 94, 18, 120), _lastUpdateTime(0) {
 	_macAddress = new uint8_t[6];
@@ -170,6 +166,39 @@ boolean CloudCoffeeMaker::_updateServer() {
 	//printToServer(buf);
 }
 
+boolean CloudCoffeeMaker::_sendErrorCode(const char * feedId, const char * apiKey, unsigned long req_id, int error) {
+	char buf[300];
+	char sBuf[30];
+	char nBuf[2];
+	nBuf[1] = '\0';
+
+	strcpy(buf, "{\"method\":\"put\",\"resource\":\"/feeds/");
+	strcat(buf, feedId);
+	strcat(buf, "\",\"headers\":{\"X-ApiKey\":\"");
+	strcat(buf, apiKey);
+	strcat(buf, "\"},\"body\":{\"version\":\"1.0.0\",\"datastreams\":[");
+	strcat(buf, "{\"id\":\"resp_id\",\"current_value\":");
+	snprintf(sBuf, 30, "%lu", req_id);
+	strcat(buf, sBuf);
+	strcat(buf, "},{\"id\":\"resp_code\",\"current_value\":");
+	snprintf(sBuf, 15, "%d", error);
+	strcat(buf, sBuf);
+	strcat(buf, "}]}}");
+
+	boolean res = false;
+	Serial.println(buf);
+	//try 3 times
+	for (int i = 0; i < 3; i++) {
+		res = _sendToServer(buf);
+		if (res)
+			break;
+		else delay(1000);
+	}
+
+	return res;
+	//printToServer(buf);
+}
+
 boolean CloudCoffeeMaker::_subscribeEndpoint(int endpoint) {
 	// initialize jsonBuffer
 	StaticJsonBuffer<200> jsonBuffer;
@@ -248,9 +277,58 @@ void CloudCoffeeMaker::_readEthernetIfAvailable() {
 		}
 
 		if (res_success) {
-			Serial.println(res_buf);
-			//_processIncomingUpdate(res_buf);
+			//Serial.println(res_buf);
+			_processAvailableData(res_buf);
 			//_prevHeartBeat = millis();
+		}
+	}
+}
+
+void CloudCoffeeMaker::_processAvailableData(char * buf) {
+	//check if data has req_id
+	StaticJsonBuffer<200> jsonBuffer;
+
+	//decode response
+	JsonObject& response = jsonBuffer.parseObject(buf);
+
+	const char * id = response["body"]["id"];
+	if (!strcmp(id, "req_id")) {
+		time_t req_id = strtoul(response["body"]["current_value"].asString(), NULL, 10);
+		//get feed id
+		const char * resource = response["resource"].asString();
+		char restok[30];
+		char * pch;
+		strncpy(restok, resource, 30);
+		pch = strtok(restok, "/");
+		pch = strtok(NULL, "/");
+
+		Serial.print("REQ: ");
+		Serial.println(pch);
+
+		//pch contains feedid.
+		//get endpoint number
+		int endpt = 0;
+		for (endpt = 0; endpt < 4; endpt++) {
+			if (!strcmp(pch, _endpointFeedId[endpt])) {
+				break;
+			}
+		}
+
+		//check status of coffeemaker
+		int traySlot = getAvailableTraySlot();
+		if (getErrorCode() == None) { // == None
+			//no error, proceed with coffee making
+			if (traySlot >= 0) { //>=
+				//retrieve ingredients.
+			}
+			else {
+				//send full tray error
+				_sendErrorCode(_endpointFeedId[endpt], _endpointApiKey[endpt], req_id, 3); //3 == full.
+			}
+		}
+		else {
+			//send error code
+			_sendErrorCode(_endpointFeedId[endpt], _endpointApiKey[endpt], req_id, getErrorCode());
 		}
 	}
 }
