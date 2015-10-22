@@ -20,7 +20,8 @@
         <activity android:name=".CreateCoffeeActivity"
             android:label="Make Coffee" />
         <activity android:name=".ProcessingCoffeeActivity"
-            android:label="Make Coffee" />
+            android:label="Make Coffee"
+            android:launchMode="singleTop"/>
         <service android:name=".XivelyTcpService"></service>
     </application>
 

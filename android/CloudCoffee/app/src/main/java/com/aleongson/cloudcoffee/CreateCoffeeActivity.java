@@ -106,6 +106,7 @@ public class CreateCoffeeActivity extends BaseActivity {
             case 0:
                 Log.v("HERE", "No Error.");
                 Intent intent = new Intent(CreateCoffeeActivity.this, ProcessingCoffeeActivity.class);
+                intent.putExtra("reqId", serviceReference.getReqId());
                 startActivity(intent);
                 CreateCoffeeActivity.this.finish();
                 //no error. open activity.
@@ -190,6 +191,6 @@ public class CreateCoffeeActivity extends BaseActivity {
 
     @Override
     protected void onBackground() {
-        serviceReference.sendNotification();
+        //serviceReference.sendNotification();
     }
 }

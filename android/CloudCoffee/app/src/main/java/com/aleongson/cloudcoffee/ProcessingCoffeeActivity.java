@@ -10,8 +10,12 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.NumberPicker;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 /**
@@ -29,8 +33,16 @@ public class ProcessingCoffeeActivity extends BaseActivity {
 
     private Handler timerHandler;
     private Runnable timerRunnable;
+    private Handler waitCoffeeHandler;
+    private Runnable waitCoffeeRunnable;
+
     private boolean timerRunning = false;
+    private boolean waitRunning = false;
     private int lastResponse = -1;
+
+    TextView titleText;
+    TextView messageText;
+    ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,12 +54,33 @@ public class ProcessingCoffeeActivity extends BaseActivity {
 
         setContentView(R.layout.activity_processing_coffee);
 
+        titleText = (TextView) findViewById(R.id.txtProcessing1);
+        messageText = (TextView) findViewById(R.id.txtProcessing2);
+        progressBar = (ProgressBar) findViewById(R.id.progressProcessing);
         //start service
         //assume service started
         //Intent intent = new Intent(this, XivelyTcpService.class);
         //startService(intent);
+        waitCoffeeHandler = new Handler();
+        waitCoffeeRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if(isBound) {
+                    serviceReference.waitCoffeeFinished(feedId, apiKey);
+                    waitCoffeeHandler.removeCallbacks(this);
+                    waitRunning = false;
+                    //start timer runnable
+                    timerHandler.postDelayed(timerRunnable, 100);
+                } else {
+                    waitCoffeeHandler.postDelayed(this, 1000);
+                }
+            }
+        };
 
-        /*
+        //run
+        waitRunning = true;
+        waitCoffeeHandler.postDelayed(waitCoffeeRunnable, 100);
+
         timerHandler = new Handler();
         timerRunnable = new Runnable() {
             @Override
@@ -63,7 +96,33 @@ public class ProcessingCoffeeActivity extends BaseActivity {
                 }
             }
         };
-        */
+    }
+
+    private void getRequestResponse() {
+        int response = serviceReference.getResponseCode();
+        titleText.setText("Tray " + Integer.toString(response + 1));
+        messageText.setText("Your coffee is ready. Thank you.");
+        progressBar.setVisibility(View.INVISIBLE);
+
+        Button b = new Button(this);
+        b.setText("Ok");
+
+        RelativeLayout rl = (RelativeLayout) findViewById(R.id.relativeProcessingCoffee);
+        RelativeLayout.LayoutParams lp =
+                new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.addRule(RelativeLayout.BELOW, R.id.txtProcessing2);
+        lp.addRule(RelativeLayout.CENTER_HORIZONTAL);
+        lp.setMargins(0, 54, 0, 0);
+        rl.addView(b, lp);
+
+        b.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ProcessingCoffeeActivity.this, MainActivity.class);
+                startActivity(intent);
+                ProcessingCoffeeActivity.this.finish();
+            }
+        });
     }
 
     private ServiceConnection connection = new ServiceConnection() {
@@ -72,9 +131,13 @@ public class ProcessingCoffeeActivity extends BaseActivity {
             serviceReference = ((XivelyTcpService.LocalBinder) service).getService();
             isBound = true;
             serviceReference.cancelNotification();
-            //if(timerRunning) {
-            //    timerHandler.postDelayed(timerRunnable, 100);
-            //}
+            serviceReference.setMinimized(false);
+            if(waitRunning) {
+                waitCoffeeHandler.postDelayed(waitCoffeeRunnable, 100);
+            }
+            if(timerRunning) {
+                timerHandler.postDelayed(timerRunnable, 100);
+            }
         }
 
         @Override
@@ -105,7 +168,8 @@ public class ProcessingCoffeeActivity extends BaseActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        //timerHandler.removeCallbacks(timerRunnable);
+        waitCoffeeHandler.removeCallbacks(waitCoffeeRunnable);
+        timerHandler.removeCallbacks(timerRunnable);
         doUnbindService();
     }
 
@@ -117,15 +181,15 @@ public class ProcessingCoffeeActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        /*
         if(isFinishing()) {
             Intent intentStopService = new Intent(this, XivelyTcpService.class);
             stopService(intentStopService);
-        }*/
+        }
     }
 
     @Override
     protected void onBackground() {
-        serviceReference.sendNotification();
+        //serviceReference.sendNotification();
+        serviceReference.setMinimized(true);
     }
 }

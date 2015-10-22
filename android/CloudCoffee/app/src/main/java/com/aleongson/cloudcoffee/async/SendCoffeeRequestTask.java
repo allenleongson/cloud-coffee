@@ -38,10 +38,11 @@ public class SendCoffeeRequestTask extends AsyncTask<Integer,Void,Integer> {
     }
 
 
-    public SendCoffeeRequestTask(ISendCoffeeRequestListener service, String feedId, String apiKey) {
+    public SendCoffeeRequestTask(ISendCoffeeRequestListener service, String feedId, String apiKey, long reqtime) {
         this.service = service;
         this.feedId = feedId;
         this.apiKey = apiKey;
+        this.reqTime = reqtime;
     }
 
     @Override
@@ -165,8 +166,6 @@ public class SendCoffeeRequestTask extends AsyncTask<Integer,Void,Integer> {
                 JSONObject body = new JSONObject();
                 JSONObject headers = new JSONObject();
                 JSONArray datastreams = new JSONArray();
-
-                reqTime = System.currentTimeMillis() / 1000;
 
                 try {
                     headers.put("X-ApiKey", apiKey);

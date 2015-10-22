@@ -13,12 +13,13 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.aleongson.cloudcoffee.async.SendCoffeeRequestTask;
+import com.aleongson.cloudcoffee.async.WaitCoffeeFinishedTask;
 
 /**
  * 22/10/2015.
  */
 public class XivelyTcpService extends Service implements
-        SendCoffeeRequestTask.ISendCoffeeRequestListener{
+        SendCoffeeRequestTask.ISendCoffeeRequestListener, WaitCoffeeFinishedTask.IWaitCoffeeFinishedListener {
     private final IBinder binder = new LocalBinder();
     private Thread backgroundThread;
     private final static int REQUEST_CODE = 100;
@@ -27,13 +28,17 @@ public class XivelyTcpService extends Service implements
 
     private boolean hasRequestPending = false;
     private boolean hasResponsePending = false;
+    private boolean isMinimized = false;
 
     private int requestResponseCode = -1;
+    private long reqId = 0;
+
+    public void setMinimized(boolean b) {
+        isMinimized = b;
+    }
 
     @Override
-    public void sendCoffeeRequestPreExecute() {
-
-    }
+    public void sendCoffeeRequestPreExecute() {}
 
     @Override
     public void sendCoffeeRequestPostExecute(Integer result) {
@@ -41,6 +46,21 @@ public class XivelyTcpService extends Service implements
         hasResponsePending = true;
         requestResponseCode = result;
     }
+
+    @Override
+    public void waitCoffeeFinishedPreExecute() {}
+
+    @Override
+    public void waitCoffeeFinishedPostExecute(Integer result) {
+        Log.v("SENDCOF", Integer.toString(result));
+        hasResponsePending = true;
+        requestResponseCode = result;
+
+        if(isMinimized) {
+            sendNotification();
+        }
+    }
+
 
     @Override
     public void onCreate() {
@@ -61,6 +81,7 @@ public class XivelyTcpService extends Service implements
         return binder;
     }
 
+
     public class LocalBinder extends Binder {
         XivelyTcpService getService() {
             return XivelyTcpService.this;
@@ -77,15 +98,15 @@ public class XivelyTcpService extends Service implements
         //dummy.interrupt();
     }
 
-    public void sendNotification() {
+    private void sendNotification() {
 //        we use the compatibility library
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("Service Running on Background")
-                .setTicker("Music Playing")
+                .setContentTitle("Cloud Coffee").setContentText("Your coffee is ready.")
+                .setTicker("Your coffee is ready.")
                 .setWhen(System.currentTimeMillis())
                 .setOngoing(true);
-        Intent startIntent = new Intent(this, MainActivity.class);
+        Intent startIntent = new Intent(this, ProcessingCoffeeActivity.class);
         PendingIntent contentIntent = PendingIntent.getActivity(this,
                 REQUEST_CODE, startIntent, 0);
         builder.setContentIntent(contentIntent);
@@ -109,7 +130,17 @@ public class XivelyTcpService extends Service implements
 
     public boolean sendCoffeeRequest(String feedId, String apiKey, int coffee, int sugar, int creamer) {
         if(!hasRequestPending && !hasResponsePending) {
-            new SendCoffeeRequestTask(this, feedId, apiKey).execute(coffee, sugar, creamer);
+            reqId = System.currentTimeMillis() / 1000;
+            new SendCoffeeRequestTask(this, feedId, apiKey, reqId).execute(coffee, sugar, creamer);
+            hasRequestPending = true;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean waitCoffeeFinished(String feedId, String apiKey) {
+        if(!hasRequestPending && !hasResponsePending) {
+            new WaitCoffeeFinishedTask(this, feedId, apiKey, reqId).execute();
             hasRequestPending = true;
             return true;
         }
@@ -124,5 +155,9 @@ public class XivelyTcpService extends Service implements
         hasRequestPending = false;
         hasResponsePending = false;
         return requestResponseCode;
+    }
+
+    public long getReqId() {
+        return reqId;
     }
 }
