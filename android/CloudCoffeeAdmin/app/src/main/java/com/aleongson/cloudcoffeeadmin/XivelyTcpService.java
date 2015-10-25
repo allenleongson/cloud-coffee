@@ -52,6 +52,24 @@ public class XivelyTcpService extends Service implements
     public void retrieveCoffeeMakerStatusPostExecute(CoffeeMakerStatus result) {
         isRetrieving = false;
         coffeeMakerStatus = result;
+
+        if(isMinimized && coffeeMakerStatus.getErrorCode() != CoffeeMakerStatus.ErrorCode.None) {
+            String str = "";
+            switch(coffeeMakerStatus.getErrorCode()) {
+                case TrayFull:
+                    str = "Tray full";
+                    break;
+                case IngredientShortSupply:
+                    str = "Ingredient Short Supply";
+                    break;
+                case TrayUnaligned:
+                    str = "Tray Unaligned";
+                    break;
+            }
+            sendNotification(str, str);
+        } else {
+            cancelNotification();
+        }
     }
 
     @Override
@@ -109,12 +127,12 @@ public class XivelyTcpService extends Service implements
         return coffeeMakerStatus;
     }
 
-    private void sendNotification() {
+    private void sendNotification(String text, String ticker) {
 //        we use the compatibility library
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("Cloud Coffee").setContentText("Your coffee is ready.")
-                .setTicker("Your coffee is ready.")
+                .setContentTitle("Cloud Coffee Admin").setContentText(text)
+                .setTicker(ticker)
                 .setWhen(System.currentTimeMillis())
                 .setOngoing(true);
         Intent startIntent = new Intent(this, MainActivity.class);

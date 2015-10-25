@@ -183,6 +183,7 @@ public class MainActivity extends BaseActivity {
             serviceReference = ((XivelyTcpService.LocalBinder) service).getService();
             isBound = true;
             serviceReference.cancelNotification();
+            serviceReference.setMinimized(false);
             if(timerRunning) {
                 timerHandler.postDelayed(timerRunnable, 100);
             }
@@ -241,6 +242,6 @@ public class MainActivity extends BaseActivity {
 
     @Override
     protected void onBackground() {
-        //serviceReference.sendNotification();
+        serviceReference.setMinimized(true);
     }
 }
