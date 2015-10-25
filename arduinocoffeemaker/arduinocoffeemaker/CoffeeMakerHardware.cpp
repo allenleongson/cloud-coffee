@@ -95,6 +95,15 @@ void CoffeeMakerHardware::setIngredientsRemaining(int coffeeTsp, int creamTsp, i
 }
 
 void CoffeeMakerHardware::setTrayStatus(CoffeeMakerHardware::TrayStatus trayStatus, int slot) {
+	if (trayStatus == Vacant) {
+		for (int i = 0; i < coffeeOrderList.size(); i++) {
+			CoffeeOrder c = coffeeOrderList.get(i);
+			if (c.tray == slot) {
+				trayStatus = Pending;
+				break;
+			}
+		}
+	}
 	_trayStatus[slot] = trayStatus;
 }
 
@@ -122,8 +131,10 @@ int CoffeeMakerHardware::getTraySlotStatus(int slot) {
 	switch (_trayStatus[slot]) {
 	case Vacant:
 		return 0;
-	case Occupied:
+	case Pending:
 		return 1;
+	case Occupied:
+		return 2;
 	}
 }
 
@@ -135,6 +146,8 @@ int CoffeeMakerHardware::getErrorCode() {
 		return 1;
 	case IngredientShortSupply:
 		return 2;
+	case TrayFull:
+		return 3;
 	}
 }
 

@@ -17,6 +17,7 @@ public:
 
 	enum TrayStatus {
 		Vacant,
+		Pending,
 		Occupied
 	};
 
